@@ -2,15 +2,15 @@
     if ( typeof define === 'function' && define.amd ) {
         // AMD
         define(['backbone'], function (Backbone) {
-            factory(root, Backbone);
+            return factory(root, Backbone);
         });
     }
     else if ( typeof exports === 'object' ) {
         // CommonJS
-        factory(root, require('backbone'));
+        return factory(root, require('backbone'));
     }
     else {
-        // Browser globals
+        // None
         factory(root, root.Backbone);
     }
 }(this, function (root, Backbone) {
@@ -22,18 +22,13 @@
         if ( ! url ) throw new Error('URL not provided.');
         if ( ! (this instanceof WS) ) return new WS(resource, url, options);
 
-        options = options || {};
+        this.options = options = options || {};
+        this.url = url;
 
-        this.socket = new root.WebSocket(url, options.protocol);
         this.typeAttribute = options.typeAttribute || 'type';
         this.dataAttribute = options.dataAttribute || 'data';
         this.reopen = 'reopen' in options ? options.reopen : true;
         this.resource = resource;
-
-        this.socket.onopen = this.onopen.bind(this);
-        this.socket.onmessage = this.onmessage.bind(this);
-        this.socket.onerror = this.onerror.bind(this);
-        this.socket.onclose = this.onclose.bind(this);
 
         if ( resource instanceof Backbone.Model ) {
             resource.on('destroy', this.destroy, this);
@@ -44,7 +39,19 @@
         if ( options.sync ) {
             resource.sync = this.sync.bind(this);
         }
+
+        this.open();
     }
+
+    WS.prototype.open = function () {
+        this.socket = this.options.protocol ?
+                      new root.WebSocket(this.url, this.options.protocol) :
+                      new root.WebSocket(this.url);
+        this.socket.onopen = this.onopen.bind(this);
+        this.socket.onmessage = this.onmessage.bind(this);
+        this.socket.onerror = this.onerror.bind(this);
+        this.socket.onclose = this.onclose.bind(this);
+    };
 
     WS.prototype.onopen = function () {
         this.resource.trigger('open');
@@ -69,8 +76,8 @@
     WS.prototype.onclose = function (code, reason, wasClean) {
         this.resource.trigger('close', code, reason, wasClean);
 
-        if ( this.reopen ) {
-            this.socket.open(this.url, this.protocol);
+        if ( !this.reopen ) {
+            this.open();
         }
     };
 
@@ -111,6 +118,8 @@
         model.trigger('request', model, this.socket, options);
         // returns nothing!
     };
+
+    Backbone.WS = WS;
 
     return WS;
 }));
