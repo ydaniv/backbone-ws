@@ -10,7 +10,7 @@
         return factory(root, require('backbone'));
     }
     else {
-        // None
+        // Browser globals
         factory(root, root.Backbone);
     }
 }(this, function (root, Backbone) {
@@ -58,15 +58,16 @@
     };
 
     WS.prototype.onmessage = function (event) {
-        var data = JSON.parse(event.data);
+        var data = JSON.parse(event.data),
+            type = this.typeAttribute && data[this.typeAttribute];
 
-        if ( this.typeAttribute && data[this.typeAttribute] ) {
-            data = this.dataAttribute && this.typeAttribute in data ? data[this.dataAttribute] : data;
+        if ( type ) {
+            data = this.dataAttribute ? data[this.dataAttribute] : data;
 
-            this.resource.trigger('message:' + data[this.typeAttribute], data);
+            this.resource.trigger('message:' + type, data);
         }
 
-        this.resource.trigger('message', data);
+        this.resource.trigger('message', data, type);
     };
 
     WS.prototype.onerror = function () {
