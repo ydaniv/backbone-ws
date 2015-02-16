@@ -37,9 +37,10 @@
         this.dataAttribute = options.dataAttribute || 'data';
         this.sync = !! options.sync;
         this.reopen = 'reopen' in options ? options.reopen : true;
-        this.resources = Array.isArray(resources) ? resources : [resources];
+        this.resources = [];
+        resources = Array.isArray(resources) ? resources : [resources];
 
-        this.resources.forEach(this.addResource, this);
+        resources.forEach(this.addResource, this);
 
         this.open();
     }
@@ -84,7 +85,7 @@
         destroy       : function () {
             this.socket.close();
             this.socket = null;
-            this.resources = null;
+            this.resources = [];
         },
         send          : function (data) {
             if ( this.socket ) {
@@ -127,6 +128,8 @@
             if ( resource instanceof Backbone.Model ) {
                 resource.on('destroy', this.removeResource, this);
             }
+
+            this.resources.push(resource);
 
             resource[this.sendAttribute || 'send'] = this.send.bind(this);
 
