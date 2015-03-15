@@ -39,6 +39,7 @@
         this.debug = !! options.debug;
         this.sync = !! options.sync;
         this.reopen = 'reopen' in options ? options.reopen : true;
+        this.reopenTimeout = options.reopenTimeout ? options.reopenTimeout : 3000;
         this.resources = [];
         resources = Array.isArray(resources) ? resources : [resources];
 
@@ -98,8 +99,8 @@
 
             this.trigger('ws:close', code, reason, wasClean);
 
-            if ( ! this.reopen ) {
-                this.open();
+            if ( this.reopen ) {
+                root.setTimeout(this.open.bind(this), this.reopenTimeout);
             }
         },
         destroy       : function () {
