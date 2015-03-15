@@ -35,6 +35,8 @@
 
         this.typeAttribute = options.typeAttribute || 'type';
         this.dataAttribute = options.dataAttribute || 'data';
+        this.keepOpen = !! options.keepOpen;
+        this.debug = !! options.debug;
         this.sync = !! options.sync;
         this.reopen = 'reopen' in options ? options.reopen : true;
         this.resources = [];
@@ -57,12 +59,21 @@
         },
         onopen        : function () {
             this.isOpen = true;
+
+            if ( this.debug ) {
+                console.info('$$$ OPEN');
+            }
+
             this.trigger('ws:open');
         },
         onmessage     : function (event) {
             var data = JSON.parse(event.data),
                 type = this.typeAttribute && data[this.typeAttribute],
                 base_topic = 'ws:message';
+
+            if ( this.debug ) {
+                console.log('<<< RECEIVED ', JSON.parse(event.data));
+            }
 
             if ( type ) {
                 data = this.dataAttribute ? data[this.dataAttribute] : data;
@@ -71,11 +82,20 @@
 
             this.trigger(base_topic, data, type);
         },
-        onerror       : function () {
-            this.trigger('ws:error');
+        onerror       : function (error) {
+            if ( this.debug ) {
+                console.error('!!! ERROR ', error);
+            }
+
+            this.trigger('ws:error', error);
         },
         onclose       : function (code, reason, wasClean) {
             this.isOpen = false;
+
+            if ( this.debug ) {
+                console.info('!!! CLOSED ', code, reason, wasClean);
+            }
+
             this.trigger('ws:close', code, reason, wasClean);
 
             if ( ! this.reopen ) {
@@ -89,6 +109,9 @@
         },
         send          : function (data) {
             if ( this.socket ) {
+                if ( this.debug ) {
+                    console.log('>>> SENT ', data);
+                }
                 this.socket.send(JSON.stringify(data));
             }
             else {
@@ -163,7 +186,7 @@
 
             this.resources.splice(this.resources.indexOf(resource), 1);
 
-            if ( ! this.resources.length ) {
+            if ( ! this.keepOpen && ! this.resources.length ) {
                 this.destroy();
             }
 
