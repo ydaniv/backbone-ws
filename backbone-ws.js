@@ -90,14 +90,14 @@
 
             this.trigger('ws:error', error);
         },
-        onclose       : function (code, reason, wasClean) {
+        onclose       : function (event) {
             this.isOpen = false;
 
             if ( this.debug ) {
-                console.info('!!! CLOSED ', code, reason, wasClean);
+                console.info('!!! CLOSED ', event);
             }
 
-            this.trigger('ws:close', code, reason, wasClean);
+            this.trigger('ws:close', event);
 
             if ( this.reopen ) {
                 root.setTimeout(this.open.bind(this), this.reopenTimeout);
