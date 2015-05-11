@@ -1,6 +1,6 @@
 {
     "name": "Backbone.ws",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "main": "backbone-ws.js",
     "keywords": ["backbone", "backbonejs", "backbone.js", "websocket"],
     "dependencies": {
