@@ -1,0 +1,23 @@
+{
+  "name": "Backbone.WS",
+  "version": "0.1.0",
+  "description": "Backbone on native WebSockets",
+  "main": "backbone-ws.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ydaniv/backbone-ws"
+  },
+  "keywords": [
+    "js",
+    "backbone",
+    "websockets"
+  ],
+  "author": "Yehonatan Daniv",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/ydaniv/backbone-ws/issues"
+  }
+}
