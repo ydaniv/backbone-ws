@@ -1,3 +1,9 @@
+/*!
+ * Backbone.WS
+ * @version 0.1.0
+ * @license BSD License (c) copyright Yehonatan Daniv
+ * https://raw.github.com/ydaniv/backbone-ws/master/LICENSE
+ */
 (function (root, factory) {
     if ( typeof define === 'function' && define.amd ) {
         // AMD
