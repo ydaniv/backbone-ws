@@ -1,4 +1,4 @@
-backbone-ws
+Backbone.WS
 ===========
 
-Backbone on native WebSockets
+Backbone on native WebSockets.
