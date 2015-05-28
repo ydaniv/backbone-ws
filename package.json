@@ -4,7 +4,7 @@
   "description": "Backbone on native WebSockets",
   "main": "backbone-ws.js",
   "scripts": {
-    "test": "test"
+    "test": "./node_modules/.bin/intern-client config=tests/intern"
   },
   "repository": {
     "type": "git",
@@ -19,5 +19,12 @@
   "license": "BSD-2-Clause",
   "bugs": {
     "url": "https://github.com/ydaniv/backbone-ws/issues"
+  },
+  "devDependencies": {
+    "intern": "~2.2.2",
+    "backbone": "~1.1.2",
+    "jquery": "~2.1.4",
+    "mock-socket": "~0.4.0",
+    "requirejs": "~2.1.17"
   }
 }
