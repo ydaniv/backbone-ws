@@ -23,15 +23,12 @@
 
     var ajaxSync = Backbone.sync;
 
-    function WS (resources, url, options) {
-        if ( ! resources ) {
-            throw new Error('Resources not provided.');
-        }
+    function WS (url, options) {
         if ( ! url ) {
             throw new Error('URL not provided.');
         }
         if ( ! (this instanceof WS) ) {
-            return new WS(resources, url, options);
+            return new WS(url, options);
         }
 
         this.options = options = options || {};
@@ -39,23 +36,35 @@
         this.url = url;
         this.isOpen = false;
 
+        this.prefix = options.prefix === void 0 ?
+                      'ws:' :
+                      options.prefix ? options.prefix + ':' : '';
         this.typeAttribute = options.typeAttribute || 'type';
         this.dataAttribute = options.dataAttribute || 'data';
-        this.keepOpen = !! options.keepOpen;
-        this.debug = !! options.debug;
-        this.sync = !! options.sync;
+        this.sendAttribute = options.sendAttribute || 'send';
+        this.keepOpen = ! ! options.keepOpen;
+        this.debug = ! ! options.debug;
+        this.useSync = ! ! options.sync;
         this.reopen = 'reopen' in options ? options.reopen : true;
         this.reopenTimeout = options.reopenTimeout ? options.reopenTimeout : 3000;
         this.resources = [];
-        resources = Array.isArray(resources) ? resources : [resources];
 
-        resources.forEach(this.addResource, this);
+        var resources = Array.isArray(options.resources) ? options.resources : [];
+
+        resources.forEach(function (resource) {
+            if ( Array.isArray(resource) ) {
+                this.bind.apply(this, resource);
+            }
+            else if ( resource && resource.resource && resource.events ) {
+                this.bind(resource.resource, resource.events);
+            }
+        }, this);
 
         this.open();
     }
 
     _.extend(WS.prototype, Backbone.Events, {
-        open          : function () {
+        open     : function () {
             this.socket = this.options.protocol ?
                           new root.WebSocket(this.url, this.options.protocol) :
                           new root.WebSocket(this.url);
@@ -64,22 +73,36 @@
             this.socket.onerror = this.onerror.bind(this);
             this.socket.onclose = this.onclose.bind(this);
         },
-        onopen        : function () {
+        onopen   : function () {
             this.isOpen = true;
 
             if ( this.debug ) {
                 console.info('$$$ OPEN');
             }
 
-            this.trigger('ws:open');
+            this.trigger(this.prefix + 'open');
         },
-        onmessage     : function (event) {
-            var data = JSON.parse(event.data),
-                type = this.typeAttribute && data[this.typeAttribute],
-                base_topic = 'ws:message';
+        onmessage: function (event) {
+            var base_topic = this.prefix + 'message',
+                data, type;
+
+            try {
+                data = JSON.parse(event.data);
+                type = this.typeAttribute && data[this.typeAttribute];
+            }
+            catch (e) {
+                data = event.data;
+            }
 
             if ( this.debug ) {
-                console.log('<<< RECEIVED ', JSON.parse(event.data));
+                var debug_data;
+                try {
+                    debug_data = JSON.parse(event.data);
+                }
+                catch (e) {
+                    debug_data = event.data;
+                }
+                console.log('<<< RECEIVED ', debug_data);
             }
 
             if ( type ) {
@@ -89,32 +112,32 @@
 
             this.trigger(base_topic, data, type);
         },
-        onerror       : function (error) {
+        onerror  : function (error) {
             if ( this.debug ) {
                 console.error('!!! ERROR ', error);
             }
 
-            this.trigger('ws:error', error);
+            this.trigger(this.prefix + 'error', error);
         },
-        onclose       : function (event) {
+        onclose  : function (event) {
             this.isOpen = false;
 
             if ( this.debug ) {
                 console.info('!!! CLOSED ', event);
             }
 
-            this.trigger('ws:close', event);
+            this.trigger(this.prefix + 'close', event);
 
-            if ( this.reopen ) {
+            if ( this.reopen && this.socket ) {
                 root.setTimeout(this.open.bind(this), this.reopenTimeout);
             }
         },
-        destroy       : function () {
-            this.socket.close();
+        destroy  : function () {
+            this.socket && this.socket.close();
             this.socket = null;
             this.resources = [];
         },
-        send          : function (data) {
+        send     : function (data) {
             if ( this.socket ) {
                 if ( this.debug ) {
                     console.log('>>> SENT ', data);
@@ -125,7 +148,7 @@
                 throw new Error('WebSocket not opened yet!');
             }
         },
-        sync          : function (method, model, options) {
+        sync     : function (method, model, options) {
             if ( options.xhr ) {
                 return ajaxSync.call(Backbone, method, model, options);
             }
@@ -147,23 +170,23 @@
             model.trigger('request', model, this.socket, options);
             // returns nothing!
         },
-        route         : function (topic, data) {
+        route    : function (topic, data) {
             var route = this.routes[topic] || this.routes['*'];
             if ( route ) {
                 return typeof route == 'function' ? route(topic, data) : route;
             }
             return topic;
         },
-        addResource   : function (resource, events) {
+        bind     : function (resource, events) {
             if ( resource instanceof Backbone.Model ) {
-                resource.on('destroy', this.removeResource, this);
+                resource.on('destroy', this.unbind, this);
             }
 
             this.resources.push(resource);
 
-            resource[this.sendAttribute || 'send'] = this.send.bind(this);
+            resource[this.sendAttribute] = this.send.bind(this);
 
-            if ( this.sync ) {
+            if ( this.useSync ) {
                 resource.sync = this.sync.bind(this);
             }
 
@@ -182,12 +205,12 @@
 
             return this;
         },
-        removeResource: function (resource) {
+        unbind   : function (resource) {
             resource.stopListening(this);
 
-            resource[this.sendAttribute || 'send'] = null;
+            resource[this.sendAttribute] = null;
 
-            if ( this.sync ) {
+            if ( this.useSync ) {
                 resource.sync = ajaxSync;
             }
 
