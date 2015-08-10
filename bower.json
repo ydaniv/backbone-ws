@@ -1,15 +1,29 @@
 {
-    "name": "backbone.ws",
-    "main": "backbone-ws.js",
-    "keywords": ["backbone", "backbonejs", "backbone.js", "websocket"],
-    "description": "Backbone on native WebSockets",
-    "authors": ["Yehonatan Daniv"],
-    "dependencies": {
-        "backbone": ">=1.1.1"
-    },
-    "ignore": [],
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/ydaniv/backbone-ws.git"
-    }
+  "name": "backbone.ws",
+  "main": "backbone-ws.js",
+  "keywords": [
+    "backbone",
+    "backbonejs",
+    "backbone.js",
+    "websocket"
+  ],
+  "description": "Backbone on native WebSockets",
+  "authors": [
+    "Yehonatan Daniv"
+  ],
+  "dependencies": {
+    "backbone": ">=1.1.1"
+  },
+  "ignore": [],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ydaniv/backbone-ws.git"
+  },
+  "devDependencies": {
+    "intern": "~2.2.2",
+    "backbone": "~1.1.2",
+    "jquery": "~2.1.4",
+    "mock-socket": "~0.4.0",
+    "requirejs": "~2.1.17"
+  }
 }
