@@ -5,10 +5,10 @@
         'backbone',
         'backbone-ws',
         'mocks'
-    ], function (registerSuite, assert, Backbone, WS) {
-        return factory(root, registerSuite, assert, Backbone, WS);
+    ], function (registerSuite, assert, Backbone, WS, server) {
+        return factory(root, registerSuite, assert, Backbone, WS, server);
     });
-}(this, function (root, registerSuite, assert, Backbone, WS) {
+}(this, function (root, registerSuite, assert, Backbone, WS, server) {
 
     registerSuite(function () {
         var SERVER_WS_URL = 'ws://localhost:8090',
@@ -82,6 +82,47 @@
                 assert.isNull(ws.socket);
                 assert.notInclude(ws.resources, model);
                 dfd.resolve();
+            },
+            'test sync': function () {
+                var dfd = this.async(1000),
+                    request_triggered = false;
+                ws.useSync = true;
+                ws.bind(
+                    model,
+                    {
+                        'ws:message': dfd.resolve
+                    });
+
+                assert.include(ws.resources, model);
+                model.on('request', function () {
+                    request_triggered = true;
+                });
+                model.save({ topic: 'world' });
+                dfd.promise.then(function (message) {
+                    assert.isTrue(request_triggered);
+                    assert.propertyVal(message, 'message', 'hello');
+                });
+            },
+            'test route': function () {
+                var dfd = this.async(1000),
+                    events = {};
+
+                ws.routes = {
+                    'ws:message:jump': function (topic, data) {
+                        return 'ws:message:' + data.id;
+                    }
+                };
+
+                events['ws:message:' + model.cid] = dfd.resolve;
+
+                ws.bind(
+                    model,
+                    events);
+
+                server.send('{"type":"jump","data":{"id":"' + model.cid + '","get":"down"}}');
+                dfd.promise.then(function (message) {
+                    assert.propertyVal(message, 'get', 'down');
+                });
             }
         };
     });
