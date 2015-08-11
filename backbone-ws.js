@@ -1,6 +1,6 @@
 /*!
  * Backbone.WS
- * @version 0.1.0
+ * @version 0.1.1
  * @license BSD License (c) copyright Yehonatan Daniv
  * https://raw.github.com/ydaniv/backbone-ws/master/LICENSE
  */
