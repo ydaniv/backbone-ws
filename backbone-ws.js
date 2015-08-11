@@ -48,6 +48,11 @@
         this.reopen = 'reopen' in options ? options.reopen : true;
         this.reopenTimeout = options.reopenTimeout ? options.reopenTimeout : 3000;
         this.resources = [];
+        this.defaultEvents = {};
+
+        ['open', 'message', 'close', 'error'].forEach(function (event) {
+            this.defaultEvents[this.prefix + event] = true
+        }, this);
 
         var resources = Array.isArray(options.resources) ? options.resources : [];
 
@@ -190,7 +195,7 @@
                 resource.sync = this.sync.bind(this);
             }
 
-            Object.keys(events).forEach(function (event) {
+            Object.keys(events || this.defaultEvents).forEach(function (event) {
                 var handler = events[event];
 
                 if ( handler === true ) {
