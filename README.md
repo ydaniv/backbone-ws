@@ -78,7 +78,7 @@ Example:
     var ws = new Backbone.WS('ws://example.com/');
     var model = new Backbone.Model();
 
-    ws.bind(model, { 'ws:message:update': 'set' });
+    ws.bind(model, { 'ws:message:update': model.set });
 
     // server sends message: '{"type": "update", "data": {"answer": 42} }'
 
