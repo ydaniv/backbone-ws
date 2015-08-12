@@ -148,6 +148,7 @@ If you'd really like to help out you can start with one of the following and sen
 * Add CI integration (Travis?).
 * Add coverage integration (Coveralls?).
 * Add lovely badges to the README (:
+* Write up a nice demo with live code editor using [mock-socket](https://github.com/thoov/mock-socket).
 
 ## License
 
