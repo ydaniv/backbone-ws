@@ -195,7 +195,9 @@
                 resource.sync = this.sync.bind(this);
             }
 
-            Object.keys(events || this.defaultEvents).forEach(function (event) {
+            events = events || this.defaultEvents;
+
+            Object.keys(events).forEach(function (event) {
                 var handler = events[event];
 
                 if ( handler === true ) {
