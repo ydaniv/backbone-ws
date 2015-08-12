@@ -38,7 +38,7 @@
             },
             'open on construction'                   : function () {
                 var instance = WS(SERVER_WS_URL),
-                    dfd = this.async(1000);
+                    dfd = this.async(100);
 
                 instance.bind(
                     model,
@@ -51,7 +51,7 @@
                 });
             },
             'construct with resource'                : function () {
-                var dfd = this.async(1000, 2),
+                var dfd = this.async(100, 2),
                     instance = WS(SERVER_WS_URL, {
                         resources: [
                             {
@@ -74,7 +74,7 @@
                 var instance = WS(SERVER_WS_URL, {
                         typeAttribute: 'topic'
                     }),
-                    dfd = this.async(1000, 2);
+                    dfd = this.async(100, 2);
 
                 instance.bind(
                     model,
@@ -93,7 +93,7 @@
                 var instance = WS(SERVER_WS_URL, {
                         dataAttribute: 'info'
                     }),
-                    dfd = this.async(1000, 2);
+                    dfd = this.async(100, 2);
 
                 instance.bind(
                     model,
@@ -112,7 +112,7 @@
                 var instance = WS(SERVER_WS_URL, {
                         keepOpen: true
                     }),
-                    dfd = this.async(1000),
+                    dfd = this.async(100),
                     old_destroy = instance.destroy;
                 instance.destroy = function () {
                     throw new Error('.destroy() called!');
@@ -135,7 +135,7 @@
                 var instance = WS(SERVER_WS_URL, {
                         sendAttribute: 'flip'
                     }),
-                    dfd = this.async(1000);
+                    dfd = this.async(100);
 
                 instance.bind(
                     model,
@@ -153,7 +153,7 @@
                 var instance = WS(SERVER_WS_URL, {
                         reopenTimeout: 1
                     }),
-                    dfd = this.async(1000, 3);
+                    dfd = this.async(100, 3);
 
                 instance.bind(
                     model,
@@ -174,7 +174,7 @@
                 server.close();
             },
             'test specific route'                    : function () {
-                var dfd = this.async(1000, 2),
+                var dfd = this.async(100, 2),
                     instance = WS(SERVER_WS_URL, {
                         typeAttribute: 'topic',
                         routes       : {
@@ -195,7 +195,7 @@
                 model.send({ topic: 'late' });
             },
             'construct with sync'                    : function () {
-                var dfd = this.async(1000, 2),
+                var dfd = this.async(100, 2),
                     instance = WS(SERVER_WS_URL, {
                         sync     : true,
                         resources: [

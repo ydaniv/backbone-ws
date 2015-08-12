@@ -21,6 +21,9 @@ define([
             else if ( message.topic == 'something' ) {
                 server.send('{"type":"completely","info":{"message":"different"}}');
             }
+            else if ( message.topic == 'question' ) {
+                server.send('{"type":"answer","data":{"everything":42}}');
+            }
         });
     });
 

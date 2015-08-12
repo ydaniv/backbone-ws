@@ -25,7 +25,7 @@
                 ws = null;
             },
             'test bind'                                      : function () {
-                var dfd = this.async(1000);
+                var dfd = this.async(100);
                 ws.bind(
                     model,
                     {
@@ -38,8 +38,34 @@
                     assert.propertyVal(message, 'message', 'hello');
                 });
             },
+            'test bind with default events': function () {
+                var dfd = this.async(100);
+                ws.bind(model);
+                model.on('ws:message', model.set);
+                assert.include(ws.resources, model);
+
+                ws.send({ topic: 'world' });
+
+                dfd.promise.then(function () {
+                    assert.equal(model.get('message'), 'hello');
+                });
+                dfd.resolve();
+            },
+            'test bind with default events and type/data attributes': function () {
+                var dfd = this.async(100);
+                ws.bind(model);
+                model.on('ws:message:answer', model.set);
+                assert.include(ws.resources, model);
+
+                ws.send({ topic: 'question' });
+
+                dfd.promise.then(function () {
+                    assert.equal(model.get('everything'), 42);
+                });
+                dfd.resolve();
+            },
             'test unbind'                                    : function () {
-                var dfd = this.async(1000),
+                var dfd = this.async(100),
                     another_model = new Backbone.Model();
                 ws.bind(
                     model,
@@ -61,7 +87,7 @@
                 });
             },
             'test destroy'                                   : function () {
-                var dfd = this.async(1000);
+                var dfd = this.async(100);
                 ws.bind(
                     model,
                     {
@@ -72,7 +98,7 @@
                 assert.notInclude(ws.resources, model);
             },
             'test destroy called after last resource unbound': function () {
-                var dfd = this.async(1000);
+                var dfd = this.async(100);
                 ws.bind(
                     model,
                     {
@@ -84,7 +110,7 @@
                 dfd.resolve();
             },
             'test sync': function () {
-                var dfd = this.async(1000),
+                var dfd = this.async(100),
                     request_triggered = false;
                 ws.useSync = true;
                 ws.bind(
@@ -104,7 +130,7 @@
                 });
             },
             'test route': function () {
-                var dfd = this.async(1000),
+                var dfd = this.async(100),
                     events = {};
 
                 ws.routes = {
