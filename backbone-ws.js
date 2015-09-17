@@ -144,7 +144,7 @@
                     root.setTimeout(this.open.bind(this), this.reopenTimeout);
                 }
                 else {
-                    this.trigger(this.prefix + 'noretries');
+                    this.trigger(this.prefix + 'noretries', event);
                 }
             }
         },

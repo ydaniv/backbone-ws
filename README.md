@@ -152,10 +152,12 @@ Triggered when a [`CloseEvent`](https://developer.mozilla.org/en-US/docs/Web/API
 
 Handler takes a single argument, the CloseEvent's original event object.
 
-#### `noretries`
+#### `noretries` :: `(event {Object})`
 
 Triggered once a `CloseEvent` occurs, and the `reopen` option is set to `true`, and the limit of
 of `retries` counter is exhausted.
+
+Handler takes a single argument, the last CloseEvent's original event object.
 
 ## Installing
 
