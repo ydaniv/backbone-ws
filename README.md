@@ -63,6 +63,7 @@ var ws = new Backbone.WS('ws://example.com/', { sync: true, keepOpen: true });
 * **sync** - If `true` the base `.sync()` method will be replaced to use `.send()` for transport. Can be opted out by providing `{ xhr: true }` in options. Default: `false`.
 * **reopen** - If `true` the instance will attempt to reconnect automatically on `close`. Default: `true`.
 * **reopenTimeout** - The timeout in milliseconds to use before reconnecting. Default: `3000`.
+* **retries** - The number of consecutive times the WS instance will attempt to reopen the connection once it closes. This counter is reset once a connection is successfully opened. Default: `3`.
 * **debug** - If `true` will log to console all events and in/out-going data (`open`/`message`/`close`/`error`/`send`). Default: `false`.
 
 Helper options for creating custom API integrations, you can set these options for attributes that
@@ -106,6 +107,55 @@ Sends the data. JSON stringifying is done internally.
 #### `destroy()`
 
 Destroys the WS instance. If `keepOpen` option is set to `false` will be called automatically when last bound resource is calls `.unbind()`.
+
+### Events:
+
+__Note__: All events are prefixed by the `prefix` option + (defaults to `'ws'`) `':'` as separator.
+
+#### `open`
+
+Triggered once a connection is open.
+
+#### `message:<route>` :: `(data {*})`
+
+Triggered when a message is accepted via WebSocket,
+and __only__ if the `typeAttribute` option has a value and that value is
+found in the original message event's data.
+
+Handler takes a single argument, the event's data. If the `dataAttribute` option has a value
+and that value is found in the original event's data, that value is passed to the handler instead.
+
+__Note__: Data is assumed to be in JSON format and is parsed as so.
+
+#### `message` :: `(data {*}, type {string})`
+
+Triggered when a message is accepted via WebSocket, after the above custom route event.
+
+Handler takes 2 arguments, the event's data and its type. If the `dataAttribute` option has a value
+and that value is found in the original event's data, that value is passed to the handler instead.
+Same goes for the type argument and the `typeAttribute` option.
+
+__Note__: Data is assumed to be in JSON format and is parsed as so.
+
+#### `error` :: `(event {Object}, isOpen {boolean})`
+
+Triggered when an error event is accepted via WebSocket.
+
+Handler takes 2 arguments, the original event object and a boolean representing the connection's
+state at the moment the event is triggered.
+
+Usually an `error` event that occurs while a connection is closed means a failure to establish connection.
+
+#### `close` :: `(event {Object})`
+
+Triggered when a [`CloseEvent`](https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent) is accepted via WebSocket.
+
+Handler takes a single argument, the CloseEvent's original event object.
+
+#### `noretries`
+
+Triggered once a `CloseEvent` occurs, and the `reopen` option is set to `true`, and the limit of
+of `retries` counter is exhausted.
 
 ## Installing
 

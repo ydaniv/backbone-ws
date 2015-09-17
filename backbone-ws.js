@@ -46,11 +46,15 @@
         this.debug = ! ! options.debug;
         this.useSync = ! ! options.sync;
         this.reopen = 'reopen' in options ? options.reopen : true;
+        this.retries = 'retries' in options ? options.retries : 3;
         this.reopenTimeout = options.reopenTimeout ? options.reopenTimeout : 3000;
         this.resources = [];
         this.defaultEvents = {};
 
-        ['open', 'message', 'close', 'error'].forEach(function (event) {
+        // cache retries
+        this.options.retries = this.retries;
+
+        ['open', 'message', 'close', 'error', 'noretries'].forEach(function (event) {
             this.defaultEvents[this.prefix + event] = true
         }, this);
 
@@ -80,6 +84,7 @@
         },
         onopen   : function () {
             this.isOpen = true;
+            this.retries = this.options.retries;
 
             if ( this.debug ) {
                 console.info('$$$ OPEN');
@@ -119,10 +124,10 @@
         },
         onerror  : function (error) {
             if ( this.debug ) {
-                console.error('!!! ERROR ', error);
+                console.error('!!! ERROR ', error, this.isOpen);
             }
 
-            this.trigger(this.prefix + 'error', error);
+            this.trigger(this.prefix + 'error', error, this.isOpen);
         },
         onclose  : function (event) {
             this.isOpen = false;
@@ -134,7 +139,13 @@
             this.trigger(this.prefix + 'close', event);
 
             if ( this.reopen && this.socket ) {
-                root.setTimeout(this.open.bind(this), this.reopenTimeout);
+                if ( this.retries ) {
+                    this.retries -= 1;
+                    root.setTimeout(this.open.bind(this), this.reopenTimeout);
+                }
+                else {
+                    this.trigger(this.prefix + 'noretries');
+                }
             }
         },
         destroy  : function () {
