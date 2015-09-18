@@ -219,21 +219,45 @@
             },
             'construct with sync and xhr option true': function () {
                 var instance = WS(SERVER_WS_URL, {
-                        sync     : true,
-                        resources: [
+                    sync     : true,
+                    resources: [
+                        {
+                            resource: model,
+                            events  : {
+                                'ws:message': function () {
+                                    assert(false);
+                                }
+                            }
+                        }
+                    ]
+                });
+                assert.throws(function () {
+                    model.save({ topic: 'world' }, { xhr: true });
+                }, Error);
+            },
+            'construct with retries'                 : function () {
+                var dfd = this.async(100, 7),
+                    instance = WS(SERVER_WS_URL, {
+                        retries      : 2,
+                        reopenTimeout: 1,
+                        resources    : [
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:message': function () {
-                                        assert(false);
+                                    'ws:close': function () {
+                                        dfd.resolve();
+                                    },
+                                    'ws:open' : function () {
+                                        dfd.resolve();
+                                        server.close();
+                                    },
+                                    'ws:noretries': function () {
+                                        dfd.resolve();
                                     }
                                 }
                             }
                         ]
                     });
-                assert.throws(function () {
-                    model.save({ topic: 'world' }, { xhr: true });
-                }, Error);
             }
             //'test route *'                : function () {
             //    var dfd = this.async(1000, 2),
