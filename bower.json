@@ -14,7 +14,14 @@
   "dependencies": {
     "backbone": ">=1.1.1"
   },
-  "ignore": [],
+  "ignore": [
+    "tests",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE",
+    "package.json",
+    ".gitignore"
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/ydaniv/backbone-ws.git"
