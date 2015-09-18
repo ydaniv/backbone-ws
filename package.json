@@ -1,6 +1,6 @@
 {
   "name": "backbone.ws",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Backbone on native WebSockets",
   "main": "backbone-ws.js",
   "scripts": {
