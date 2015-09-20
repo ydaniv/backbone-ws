@@ -5,13 +5,14 @@
         'backbone',
         'backbone-ws',
         'mocks'
-    ], function (registerSuite, assert, Backbone, WS, server) {
-        return factory(root, registerSuite, assert, Backbone, WS, server);
+    ], function (registerSuite, assert, Backbone, WS, mocks) {
+        return factory(root, registerSuite, assert, Backbone, WS, mocks);
     });
-}(this, function (root, registerSuite, assert, Backbone, WS, server) {
+}(this, function (root, registerSuite, assert, Backbone, WS, mocks) {
 
     registerSuite(function () {
-        var SERVER_WS_URL = 'ws://localhost:8090',
+        var server = mocks.server,
+            SERVER_WS_URL = mocks.url,
             model;
 
         var WebSocketConstructor = this.WebSocket;
@@ -244,10 +245,10 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:close': function () {
+                                    'ws:close'    : function () {
                                         dfd.resolve();
                                     },
-                                    'ws:open' : function () {
+                                    'ws:open'     : function () {
                                         dfd.resolve();
                                         server.close();
                                     },
@@ -258,6 +259,98 @@
                             }
                         ]
                     });
+            },
+            'construct with expect function success' : function () {
+                var dfd = this.async(100),
+                    instance = WS(SERVER_WS_URL, {
+                        expectSeconds: .01,
+                        expect       : function (data) {
+                            return data.message == 'hello';
+                        },
+                        resources    : [
+                            {
+                                resource: model,
+                                events  : {
+                                    'ws:timeout': function () {
+                                        assert(false, 'Timeout reached');
+                                    },
+                                    'ws:message': function (data) {
+                                        dfd.resolve();
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                instance.send({ topic: 'world' }, true);
+                dfd.promise.then(function (message) {
+                    assert.propertyVal(message, 'message', 'hello');
+                });
+            },
+            'construct with expect function fail'    : function () {
+                var dfd = this.async(100),
+                    instance = WS(SERVER_WS_URL, {
+                        expectSeconds: .01,
+                        expect       : function (data) {
+                            return data.message == 'polly';
+                        },
+                        resources    : [
+                            {
+                                resource: model,
+                                events  : {
+                                    'ws:timeout': function () {
+                                        dfd.resolve();
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                instance.send({ topic: 'world' }, true);
+            },
+            // Uncomment once upgraded to mock-socket 0.8 - probably faulty connection handling in mock-socket
+            //'construct with expect string success' : function () {
+            //    var dfd = this.async(100),
+            //        instance = WS(SERVER_WS_URL, {
+            //            typeAttribute: 'topic',
+            //            expect       : 'polly',
+            //            expectSeconds: .1,
+            //            resources    : [
+            //                {
+            //                    resource: model,
+            //                    events  : {
+            //                        'ws:timeout': function () {
+            //                            assert(false, 'Timeout reached');
+            //                        },
+            //                        'ws:message': function (data) {
+            //
+            //                        }
+            //                    }
+            //                }
+            //            ]
+            //        });
+            //    instance.send({ topic: 'late' }, true);
+            //    dfd.promise.then(function (message) {
+            //        assert.propertyVal(message, 'message', 'parrot');
+            //        //dfd.resolve();
+            //    });
+            //},
+            'construct with expect string fail'      : function () {
+                var dfd = this.async(100),
+                    instance = WS(SERVER_WS_URL, {
+                        typeAttribute: 'topic',
+                        expectSeconds: .1,
+                        expect       : 'polly',
+                        resources    : [
+                            {
+                                resource: model,
+                                events  : {
+                                    'ws:timeout': function () {
+                                        dfd.resolve();
+                                    }
+                                }
+                            }
+                        ]
+                    });
+                instance.send({ topic: 'world' }, true);
             }
             //'test route *'                : function () {
             //    var dfd = this.async(1000, 2),

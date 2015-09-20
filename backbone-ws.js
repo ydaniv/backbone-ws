@@ -23,6 +23,12 @@
 
     var ajaxSync = Backbone.sync;
 
+    function clearExpecting () {
+        if ( this.expecting ) {
+            root.clearTimeout(this.expecting);
+        }
+    }
+
     function WS (url, options) {
         if ( ! url ) {
             throw new Error('URL not provided.');
@@ -48,8 +54,12 @@
         this.reopen = 'reopen' in options ? options.reopen : true;
         this.retries = 'retries' in options ? options.retries : 3;
         this.reopenTimeout = options.reopenTimeout ? options.reopenTimeout : 3000;
+        this.expectSeconds = (options.expectSeconds || 7) * 1000;
+        this.expectation = 'expect' in options ? options.expect : null;
         this.resources = [];
         this.defaultEvents = {};
+        this.reopenTry = null;
+        this.expecting = null;
 
         // cache retries
         this.options.retries = this.retries;
@@ -104,6 +114,10 @@
                 data = event.data;
             }
 
+            if ( this.expecting && this.assert(data) ) {
+                clearExpecting.call(this, data);
+            }
+
             if ( this.debug ) {
                 var debug_data;
                 try {
@@ -132,6 +146,8 @@
         onclose  : function (event) {
             this.isOpen = false;
 
+            clearExpecting.call(this);
+
             if ( this.debug ) {
                 console.info('!!! CLOSED ', event);
             }
@@ -141,7 +157,12 @@
             if ( this.reopen && this.socket ) {
                 if ( this.retries ) {
                     this.retries -= 1;
-                    root.setTimeout(this.open.bind(this), this.reopenTimeout);
+
+                    if ( this.reopenTry ) {
+                        root.clearTimeout(this.reopenTry);
+                    }
+
+                    this.reopenTry = root.setTimeout(this.open.bind(this), this.reopenTimeout);
                 }
                 else {
                     this.trigger(this.prefix + 'noretries', event);
@@ -149,20 +170,63 @@
             }
         },
         destroy  : function () {
+            if ( this.reopenTry ) {
+                root.clearTimeout(this.reopenTry);
+            }
+            clearExpecting.call(this);
+
             this.socket && this.socket.close();
             this.socket = null;
             this.resources = [];
         },
-        send     : function (data) {
+        send     : function (data, expectation, seconds) {
             if ( this.socket ) {
                 if ( this.debug ) {
                     console.log('>>> SENT ', data);
                 }
                 this.socket.send(JSON.stringify(data));
+
+                if ( expectation ) {
+                    this.expect(expectation, seconds);
+                }
             }
             else {
                 throw new Error('WebSocket not opened yet!');
             }
+        },
+        expect   : function (expectation, seconds) {
+            clearExpecting.call(this);
+
+            if ( expectation !== true ) {
+                this.expectation = expectation;
+            }
+
+            this.expecting = root.setTimeout(function () {
+                this.trigger(this.prefix + 'timeout');
+            }.bind(this), seconds ? seconds * 1000 : this.expectSeconds);
+
+            return this;
+        },
+        assert   : function (data) {
+            var type;
+
+            if ( this.expectation ) {
+                type = typeof this.expectation;
+
+                if ( type == 'function' ) {
+                    return this.expectation.call(this, data);
+                }
+                else if ( type == 'string' ) {
+                    return typeof data == 'string' ?
+                           data == this.expectation :
+                           data[this.typeAttribute] == this.expectation;
+                }
+
+                return Object.keys(this.expectation).every(function (key) {
+                    return this.expectation[key] === data[key];
+                }.bind(this));
+            }
+            return true;
         },
         sync     : function (method, model, options) {
             if ( options.xhr ) {

@@ -5,26 +5,27 @@
         'backbone',
         'backbone-ws',
         'mocks'
-    ], function (registerSuite, assert, Backbone, WS, server) {
-        return factory(root, registerSuite, assert, Backbone, WS, server);
+    ], function (registerSuite, assert, Backbone, WS, mocks) {
+        return factory(root, registerSuite, assert, Backbone, WS, mocks);
     });
-}(this, function (root, registerSuite, assert, Backbone, WS, server) {
+}(this, function (root, registerSuite, assert, Backbone, WS, mocks) {
 
     registerSuite(function () {
-        var SERVER_WS_URL = 'ws://localhost:8090',
+        var server = mocks.server,
+            SERVER_WS_URL = mocks.url,
             model = new Backbone.Model(),
             ws;
 
         return {
-            name                                             : 'Methods',
-            beforeEach                                       : function () {
+            name                                                    : 'Methods',
+            beforeEach                                              : function () {
                 ws = WS(SERVER_WS_URL);
             },
-            afterEach                                        : function () {
+            afterEach                                               : function () {
                 ws.socket && ws.unbind(model);
                 ws = null;
             },
-            'test bind'                                      : function () {
+            'test bind'                                             : function () {
                 var dfd = this.async(100);
                 ws.bind(
                     model,
@@ -38,7 +39,7 @@
                     assert.propertyVal(message, 'message', 'hello');
                 });
             },
-            'test bind with default events': function () {
+            'test bind with default events'                         : function () {
                 var dfd = this.async(100);
                 ws.bind(model);
                 model.on('ws:message', model.set);
@@ -64,7 +65,7 @@
                 });
                 dfd.resolve();
             },
-            'test unbind'                                    : function () {
+            'test unbind'                                           : function () {
                 var dfd = this.async(100),
                     another_model = new Backbone.Model();
                 ws.bind(
@@ -86,7 +87,7 @@
                     ws.unbind(another_model);
                 });
             },
-            'test destroy'                                   : function () {
+            'test destroy'                                          : function () {
                 var dfd = this.async(100);
                 ws.bind(
                     model,
@@ -97,7 +98,7 @@
                 assert.isNull(ws.socket);
                 assert.notInclude(ws.resources, model);
             },
-            'test destroy called after last resource unbound': function () {
+            'test destroy called after last resource unbound'       : function () {
                 var dfd = this.async(100);
                 ws.bind(
                     model,
@@ -109,7 +110,7 @@
                 assert.notInclude(ws.resources, model);
                 dfd.resolve();
             },
-            'test sync': function () {
+            'test sync'                                             : function () {
                 var dfd = this.async(100),
                     request_triggered = false;
                 ws.useSync = true;
@@ -129,7 +130,7 @@
                     assert.propertyVal(message, 'message', 'hello');
                 });
             },
-            'test route': function () {
+            'test route'                                            : function () {
                 var dfd = this.async(100),
                     events = {};
 
@@ -149,6 +150,26 @@
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'get', 'down');
                 });
+            },
+            'test assert'                                           : function () {
+                assert(ws.assert(), 'Asserting there`s no expectation failed.');
+
+                ws.expectation = function (data) {
+                    return data === true;
+                };
+                assert(ws.assert(true), 'Asserting function expectation failed.');
+
+                ws.expectation = 'yo!';
+                assert(ws.assert({ type: 'yo!' }), 'Asserting type expectation failed.');
+
+                ws.expectation = 'yo!';
+                assert(ws.assert('yo!'), 'Asserting string data expectation failed.');
+
+                ws.expectation = { yo: 'ho!' };
+                assert(ws.assert({ yo: 'ho!' }), 'Asserting data Object expectation failed.');
+                //},
+                //'test expect'                                           : function () {
+                //TBD
             }
         };
     });

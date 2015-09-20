@@ -27,5 +27,8 @@ define([
         });
     });
 
-    return mockServer;
+    return {
+        server: mockServer,
+        url   : SERVER_WS_URL
+    };
 });
