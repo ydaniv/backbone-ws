@@ -26,6 +26,7 @@
     function clearExpecting () {
         if ( this.expecting ) {
             root.clearTimeout(this.expecting);
+            this.expecting = null;
         }
     }
 
