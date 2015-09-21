@@ -65,7 +65,7 @@
         // cache retries
         this.options.retries = this.retries;
 
-        ['open', 'message', 'close', 'error', 'noretries'].forEach(function (event) {
+        ['open', 'message', 'close', 'error', 'noretries', 'timeout'].forEach(function (event) {
             this.defaultEvents[this.prefix + event] = true
         }, this);
 
