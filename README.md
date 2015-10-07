@@ -87,6 +87,15 @@ Example:
 
     // 42
 
+Helper options for ensuring proper communication between client and server, or simply
+for enforcing a strict state in the client:
+
+* **expect** - A default expectation to use once an expectation is requested. Can be either a `string`, a `function` or an `Object`. Defaults `null`.
+* **expectSeconds** - A default minimal number of seconds to use when waiting before triggering the `timeout` event. This can be override once as an argument to `expect()` or `send()`.
+Example:
+
+    //TBD
+
 ### Methods:
 
 #### `bind(resource, [events])`
@@ -107,6 +116,27 @@ Sends the data. JSON stringifying is done internally.
 #### `destroy()`
 
 Destroys the WS instance. If `keepOpen` option is set to `false` will be called automatically when last bound resource is calls `.unbind()`.
+
+#### `expect([expectation] [, seconds])`
+
+Sets an expectation for receiving a message from the server.
+
+If called without arguments then `expectation` defaults to the `expect` option and
+`seconds` defaults to the `expectSeconds` option. If `expectation` is `true` then
+it behaves as if no `expectation` argument was provided.
+
+Otherwise, any `expectation` given will be used for assertion.
+
+#### `assert([data])`
+
+Asserts that the given `data` fulfils the set expectation, if one is set.
+
+If the set expectation is a `function` then `data` will be passed as an argument to it.
+if it is a `string` then if `data` is also a `string` they are compared, otherwise
+the value of `data[this.typeAttribute]` is compared  against the expectation.
+
+Otherwise, expecting both the expectation and `data` to be `Object`s, each key and value in the
+expectation are compared against the same pair in `data`.
 
 ### Events:
 
@@ -158,6 +188,10 @@ Triggered once a `CloseEvent` occurs, and the `reopen` option is set to `true`, 
 of `retries` counter is exhausted.
 
 Handler takes a single argument, the last CloseEvent's original event object.
+
+#### `timeout`
+
+Triggered once an expectation on a message has timed out.
 
 ## Installing
 
