@@ -46,8 +46,8 @@
         this.prefix = options.prefix === void 0 ?
                       'ws:' :
                       options.prefix ? options.prefix + ':' : '';
-        this.typeAttribute = options.typeAttribute || 'type';
-        this.dataAttribute = options.dataAttribute || 'data';
+        this.typeAttribute = 'typeAttribute' in options ? options.typeAttribute : 'type';
+        this.dataAttribute = 'dataAttribute' in options ? options.dataAttribute : 'data';
         this.sendAttribute = options.sendAttribute || 'send';
         this.keepOpen = ! ! options.keepOpen;
         this.debug = ! ! options.debug;
@@ -185,11 +185,12 @@
                 if ( this.debug ) {
                     console.log('>>> SENT ', data);
                 }
-                this.socket.send(JSON.stringify(data));
 
                 if ( expectation ) {
                     this.expect(expectation, seconds);
                 }
+
+                this.socket.send(JSON.stringify(data));
             }
             else {
                 throw new Error('WebSocket not opened yet!');
@@ -198,7 +199,7 @@
         expect   : function (expectation, seconds) {
             clearExpecting.call(this);
 
-            if ( expectation !== true ) {
+            if ( expectation !== true && arguments.length ) {
                 this.expectation = expectation;
             }
 
