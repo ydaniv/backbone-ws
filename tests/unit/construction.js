@@ -11,7 +11,7 @@
 }(this, function (root, registerSuite, assert, Backbone, WS, mocks) {
 
     registerSuite(function () {
-        var server = mocks.server,
+        var server = mocks.getServer(),
             SERVER_WS_URL = mocks.url,
             model;
 
@@ -24,6 +24,7 @@
             },
             afterEach                                : function () {
                 model.destroy();
+                server = server.restart();
             },
             'construct without url'                  : function () {
                 function noUrl () {
@@ -59,13 +60,15 @@
                                 resource: model,
                                 events  : {
                                     'ws:message': dfd.resolve,
-                                    'ws:open'   : dfd.resolve
+                                    'ws:open'   : function () {
+                                        dfd.resolve();
+                                        instance.send({ topic: 'world' });
+                                    }
                                 }
                             }
                         ]
                     });
                 assert.include(instance.resources, model);
-                instance.send({ topic: 'world' });
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'message', 'hello');
                     assert.isTrue(instance.isOpen);
@@ -81,10 +84,12 @@
                     model,
                     {
                         'ws:message:polly': dfd.resolve,
-                        'ws:message'      : dfd.resolve
+                        'ws:message'      : dfd.resolve,
+                        'ws:open'         : function () {
+                            instance.send({ topic: 'late' });
+                        }
                     });
 
-                instance.send({ topic: 'late' });
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'message', 'parrot');
                     assert.isTrue(instance.isOpen);
@@ -100,10 +105,12 @@
                     model,
                     {
                         'ws:message:completely': dfd.resolve,
-                        'ws:message'           : dfd.resolve
+                        'ws:message'           : dfd.resolve,
+                        'ws:open'              : function () {
+                            instance.send({ topic: 'something' });
+                        }
                     });
 
-                instance.send({ topic: 'something' });
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'message', 'different');
                     assert.isTrue(instance.isOpen);
@@ -122,10 +129,12 @@
                 instance.bind(
                     model,
                     {
-                        'ws:message': dfd.resolve
+                        'ws:message': dfd.resolve,
+                        'ws:open'   : function () {
+                            instance.send({ topic: 'world' });
+                        }
                     });
 
-                instance.send({ topic: 'world' });
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'message', 'hello');
                     assert.isTrue(instance.isOpen);
@@ -141,10 +150,12 @@
                 instance.bind(
                     model,
                     {
-                        'ws:message': dfd.resolve
+                        'ws:message': dfd.resolve,
+                        'ws:open'   : function () {
+                            model.flip({ topic: 'world' });
+                        }
                     });
 
-                model.flip({ topic: 'world' });
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'message', 'hello');
                     assert.isTrue(instance.isOpen);
@@ -154,6 +165,7 @@
                 var instance = WS(SERVER_WS_URL, {
                         reopenTimeout: 1
                     }),
+                    first = true,
                     dfd = this.async(100, 3);
 
                 instance.bind(
@@ -162,6 +174,10 @@
                         'ws:open' : function () {
                             assert.isTrue(instance.isOpen);
                             dfd.resolve();
+                            if ( first ) {
+                                first = false;
+                                server = server.restart();
+                            }
                         },
                         'ws:close': function () {
                             assert.isFalse(instance.isOpen);
@@ -172,7 +188,6 @@
                 dfd.promise.then(function () {
                     assert.isTrue(instance.isOpen);
                 });
-                server.close();
             },
             'test specific route'                    : function () {
                 var dfd = this.async(100, 2),
@@ -190,10 +205,11 @@
                 instance.bind(
                     model,
                     {
-                        'ws:message': dfd.resolve
+                        'ws:message': dfd.resolve,
+                        'ws:open'   : function () {
+                            model.send({ topic: 'late' });
+                        }
                     });
-
-                model.send({ topic: 'late' });
             },
             'construct with sync'                    : function () {
                 var dfd = this.async(100, 2),
@@ -203,38 +219,46 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:message': dfd.resolve
+                                    'ws:message': dfd.resolve,
+                                    'ws:open'   : function () {
+                                        model.save({ topic: 'world' });
+                                    }
                                 }
                             }
                         ]
                     });
+
                 model.on('request', function (m, socket, options) {
                     assert.strictEqual(m, model);
                     assert.strictEqual(socket, instance.socket);
                     dfd.resolve();
                 });
-                model.save({ topic: 'world' });
+
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'message', 'hello');
                 });
             },
             'construct with sync and xhr option true': function () {
-                var instance = WS(SERVER_WS_URL, {
-                    sync     : true,
-                    resources: [
-                        {
-                            resource: model,
-                            events  : {
-                                'ws:message': function () {
-                                    assert(false);
+                var dfd = this.async(100),
+                    instance = WS(SERVER_WS_URL, {
+                        sync     : true,
+                        resources: [
+                            {
+                                resource: model,
+                                events  : {
+                                    'ws:message': function () {
+                                        assert(false);
+                                    },
+                                    'ws:open'   : function () {
+                                        assert.throws(function () {
+                                            model.save({ topic: 'world' }, { xhr: true });
+                                        }, Error);
+                                        dfd.resolve();
+                                    }
                                 }
                             }
-                        }
-                    ]
-                });
-                assert.throws(function () {
-                    model.save({ topic: 'world' }, { xhr: true });
-                }, Error);
+                        ]
+                    });
             },
             'construct with retries'                 : function () {
                 var dfd = this.async(100, 7),
@@ -250,7 +274,7 @@
                                     },
                                     'ws:open'     : function () {
                                         dfd.resolve();
-                                        server.close();
+                                        server = server.restart();
                                     },
                                     'ws:noretries': function () {
                                         dfd.resolve();
@@ -261,27 +285,31 @@
                     });
             },
             'construct with expect function success' : function () {
-                var dfd = this.async(100),
+                var dfd = this.async(100, 2),
                     instance = WS(SERVER_WS_URL, {
-                        expectSeconds: .01,
+                        expectSeconds: .05,
+                        typeAttribute: false,
+                        dataAttribute: false,
                         expect       : function (data) {
+                            dfd.resolve();
                             return data.message == 'hello';
                         },
                         resources    : [
                             {
                                 resource: model,
                                 events  : {
+                                    'ws:open'   : function () {
+                                        instance.send({ topic: 'world' }, true);
+                                    },
                                     'ws:timeout': function () {
                                         assert(false, 'Timeout reached');
                                     },
-                                    'ws:message': function (data) {
-                                        dfd.resolve();
-                                    }
+                                    'ws:message': dfd.resolve
                                 }
                             }
                         ]
                     });
-                instance.send({ topic: 'world' }, true);
+
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'message', 'hello');
                 });
@@ -297,82 +325,82 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:timeout': function () {
-                                        dfd.resolve();
+                                    'ws:timeout': dfd.resolve,
+                                    'ws:open'   : function () {
+                                        instance.send({ topic: 'world' }, true);
                                     }
                                 }
                             }
                         ]
                     });
-                instance.send({ topic: 'world' }, true);
             },
-            // Uncomment once upgraded to mock-socket 0.8 - probably faulty connection handling in mock-socket
-            //'construct with expect string success' : function () {
-            //    var dfd = this.async(100),
-            //        instance = WS(SERVER_WS_URL, {
-            //            typeAttribute: 'topic',
-            //            expect       : 'polly',
-            //            expectSeconds: .1,
-            //            resources    : [
-            //                {
-            //                    resource: model,
-            //                    events  : {
-            //                        'ws:timeout': function () {
-            //                            assert(false, 'Timeout reached');
-            //                        },
-            //                        'ws:message': function (data) {
-            //
-            //                        }
-            //                    }
-            //                }
-            //            ]
-            //        });
-            //    instance.send({ topic: 'late' }, true);
-            //    dfd.promise.then(function (message) {
-            //        assert.propertyVal(message, 'message', 'parrot');
-            //        //dfd.resolve();
-            //    });
-            //},
+            'construct with expect string success'   : function () {
+                var dfd = this.async(100),
+                    instance = WS(SERVER_WS_URL, {
+                        typeAttribute: 'topic',
+                        expect       : 'polly',
+                        expectSeconds: .05,
+                        resources    : [
+                            {
+                                resource: model,
+                                events  : {
+                                    'ws:open'   : function () {
+                                        instance.send({ topic: 'late' }, true);
+                                    },
+                                    'ws:timeout': function () {
+                                        assert(false, 'Timeout reached');
+                                    },
+                                    'ws:message': dfd.resolve
+                                }
+                            }
+                        ]
+                    });
+
+                dfd.promise.then(function (message) {
+                    assert.propertyVal(message, 'message', 'parrot');
+                });
+            },
             'construct with expect string fail'      : function () {
                 var dfd = this.async(100),
                     instance = WS(SERVER_WS_URL, {
                         typeAttribute: 'topic',
-                        expectSeconds: .1,
+                        expectSeconds: .05,
                         expect       : 'polly',
                         resources    : [
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:timeout': function () {
-                                        dfd.resolve();
+                                    'ws:timeout': dfd.resolve,
+                                    'ws:open'   : function () {
+                                        instance.send({ topic: 'world' }, true);
                                     }
                                 }
                             }
                         ]
                     });
-                instance.send({ topic: 'world' }, true);
+            },
+            'test route *'                           : function () {
+                var dfd = this.async(1000, 2),
+                    instance = WS(SERVER_WS_URL, {
+                        typeAttribute: 'topic',
+                        routes       : {
+                            '*': function (topic, data) {
+                                assert.equal(topic, 'ws:message:polly');
+                                assert.propertyVal(data, 'message', 'parrot');
+                                dfd.resolve();
+                            }
+                        }
+                    });
+
+                instance.bind(
+                    model,
+                    {
+                        'ws:message': dfd.resolve,
+                        'ws:open'   : function () {
+                            model.send({ topic: 'late' });
+                        }
+                    });
             }
-            //'test route *'                : function () {
-            //    var dfd = this.async(1000, 2),
-            //        instance = WS(SERVER_WS_URL, {
-            //            typeAttribute: 'topic',
-            //            routes       : {
-            //                '*': function (topic, data) {
-            //                    assert.equal(topic, 'ws:message:polly');
-            //                    assert.propertyVal(data, 'message', 'parrot');
-            //                    dfd.resolve();
-            //                }
-            //            }
-            //        });
-            //
-            //    instance.bind(
-            //        model,
-            //        {
-            //            'ws:message': dfd.resolve
-            //        });
-            //
-            //    model.send({ topic: 'late' });
-            //}
         };
     });
 }));
