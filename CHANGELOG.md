@@ -1,3 +1,9 @@
+# 0.2.1
+
+#### New
+
+ - `fulfilled` event that is triggered once an expectation is met in a received message.
+
 # 0.2.0
 
 #### New

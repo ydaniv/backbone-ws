@@ -65,7 +65,7 @@
         // cache retries
         this.options.retries = this.retries;
 
-        ['open', 'message', 'close', 'error', 'noretries', 'timeout'].forEach(function (event) {
+        ['open', 'message', 'close', 'error', 'noretries', 'timeout', 'fulfilled'].forEach(function (event) {
             this.defaultEvents[this.prefix + event] = true
         }, this);
 
@@ -117,6 +117,7 @@
 
             if ( this.expecting && this.assert(data) ) {
                 clearExpecting.call(this, data);
+                this.trigger(this.prefix + 'fulfilled', data, type);
             }
 
             if ( this.debug ) {

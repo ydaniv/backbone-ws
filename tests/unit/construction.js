@@ -285,7 +285,7 @@
                     });
             },
             'construct with expect function success' : function () {
-                var dfd = this.async(100, 2),
+                var dfd = this.async(100, 3),
                     instance = WS(SERVER_WS_URL, {
                         expectSeconds: .05,
                         typeAttribute: false,
@@ -298,13 +298,14 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:open'   : function () {
+                                    'ws:open'     : function () {
                                         instance.send({ topic: 'world' }, true);
                                     },
-                                    'ws:timeout': function () {
+                                    'ws:timeout'  : function () {
                                         assert(false, 'Timeout reached');
                                     },
-                                    'ws:message': dfd.resolve
+                                    'ws:message'  : dfd.resolve,
+                                    'ws:fulfilled': dfd.resolve
                                 }
                             }
                         ]
@@ -335,7 +336,7 @@
                     });
             },
             'construct with expect string success'   : function () {
-                var dfd = this.async(100),
+                var dfd = this.async(100, 2),
                     instance = WS(SERVER_WS_URL, {
                         typeAttribute: 'topic',
                         expect       : 'polly',
@@ -344,13 +345,14 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:open'   : function () {
+                                    'ws:open'     : function () {
                                         instance.send({ topic: 'late' }, true);
                                     },
-                                    'ws:timeout': function () {
+                                    'ws:timeout'  : function () {
                                         assert(false, 'Timeout reached');
                                     },
-                                    'ws:message': dfd.resolve
+                                    'ws:message'  : dfd.resolve,
+                                    'ws:fulfilled': dfd.resolve
                                 }
                             }
                         ]
