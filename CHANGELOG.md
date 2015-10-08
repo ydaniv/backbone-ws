@@ -12,6 +12,7 @@
 
  - `expectation` 2nd argument for `send()` method for setting an expectation for a message or simply `true` to activate an expectation using the `expect` option.
  - `seconds` 3rd argument for `send()` method for setting an timeout for expectation for a message.
+ - `WS` constructor now allows `null`/`false` values for `typeAttribute`/`dataAttribute` options for disabling them.
 
 # 0.1.3
 
