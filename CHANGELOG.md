@@ -1,3 +1,9 @@
+# 0.2.2
+
+#### Fixed
+
+ - Upgraded Intern to 3.0.6 and mock-socket to 0.8.2 and fixed tests.
+
 # 0.2.1
 
 #### New
