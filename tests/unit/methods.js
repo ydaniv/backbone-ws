@@ -23,7 +23,7 @@
             },
             afterEach                                               : function () {
                 ws.socket && ws.unbind(model);
-                ws = null;
+                //ws = null;
                 server = server.restart();
             },
             'test bind'                                             : function () {

@@ -261,10 +261,11 @@
                     });
             },
             'construct with retries'                 : function () {
-                var dfd = this.async(100, 7),
+                var dfd = this.async(100, 5),
+                    first = true,
                     instance = WS(SERVER_WS_URL, {
-                        retries      : 2,
-                        reopenTimeout: 1,
+                        retries      : 1,
+                        reopenTimeout: 10,
                         resources    : [
                             {
                                 resource: model,
@@ -273,6 +274,12 @@
                                         dfd.resolve();
                                     },
                                     'ws:open'     : function () {
+                                        if ( first ) {
+                                            first = false;
+                                        }
+                                        else {
+                                            instance.retries = 0;
+                                        }
                                         dfd.resolve();
                                         server = server.restart();
                                     },
