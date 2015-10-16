@@ -95,7 +95,26 @@ for enforcing a strict state in the client:
 
 Example:
 
-    //TBD
+    var ws = new Backbone.WS(
+        'ws://example.com/',
+        {
+            expect: 'update'
+        });
+    var model = new Backbone.Model();
+
+    ws.bind(model, { 'ws:message:update': model.set });
+
+    var expectation = ws.expect();
+    expectation.promise.then(
+        function (data, type) {
+            console.log(data, type);
+        },
+        function () {
+            console.error('timeout for response to `some_topic` reached');
+        });
+
+    // server sends message: '{"type": "update", "data": {"answer": 42} }'
+    // { answer: 42 } 'update'
 
 ### Methods:
 
