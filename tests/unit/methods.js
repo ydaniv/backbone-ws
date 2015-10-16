@@ -175,26 +175,6 @@
                 dfd.promise.then(function (message) {
                     assert.propertyVal(message, 'get', 'down');
                 });
-            },
-            'test assert'                                           : function () {
-                assert(ws.assert(), 'Asserting there`s no expectation failed.');
-
-                ws.expectation = function (data) {
-                    return data === true;
-                };
-                assert(ws.assert(true), 'Asserting function expectation failed.');
-
-                ws.expectation = 'yo!';
-                assert(ws.assert({ type: 'yo!' }), 'Asserting type expectation failed.');
-
-                ws.expectation = 'yo!';
-                assert(ws.assert('yo!'), 'Asserting string data expectation failed.');
-
-                ws.expectation = { yo: 'ho!' };
-                assert(ws.assert({ yo: 'ho!' }), 'Asserting data Object expectation failed.');
-                //},
-                //'test expect'                                           : function () {
-                //TBD
             }
         };
     });

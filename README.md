@@ -92,6 +92,7 @@ for enforcing a strict state in the client:
 
 * **expect** - A default expectation to use once an expectation is requested. Can be either a `string`, a `function` or an `Object`. Defaults `null`.
 * **expectSeconds** - A default minimal number of seconds to use when waiting before triggering the `timeout` event. This can be override once as an argument to `expect()` or `send()`.
+
 Example:
 
     //TBD
@@ -119,24 +120,24 @@ Destroys the WS instance. If `keepOpen` option is set to `false` will be called 
 
 #### `expect([expectation] [, seconds])`
 
-Sets an expectation for receiving a message from the server.
+Creates and returns an expectation for receiving a message from the server.
 
 If called without arguments then `expectation` defaults to the `expect` option and
 `seconds` defaults to the `expectSeconds` option. If `expectation` is `true` then
 it behaves as if no `expectation` argument was provided.
 
-Otherwise, any `expectation` given will be used for assertion.
+Otherwise, any `expectation` given will be used for assertion. If `false`/`null` are used then any
+incoming message will resolve the expectation.
 
-#### `assert([data])`
+An Expectation object has a `promise` property which is a Promise object. You can set
+handlers for fulfilled/rejected cases according to the Promises API.
 
-Asserts that the given `data` fulfils the set expectation, if one is set.
+This promise will be rejected when the timeout set in `seconds` ends.
 
-If the set expectation is a `function` then `data` will be passed as an argument to it.
-if it is a `string` then if `data` is also a `string` they are compared, otherwise
-the value of `data[this.typeAttribute]` is compared  against the expectation.
+You can dispose of the expectation before that by calling the `.kill()` method of the expectation object. 
 
-Otherwise, expecting both the expectation and `data` to be `Object`s, each key and value in the
-expectation are compared against the same pair in `data`.
+This mechanism can be used for creating a lightweight request/response like API, or a heartbeat mechanism, or
+validating that a client can send and receive data.
 
 ### Events:
 
@@ -188,10 +189,6 @@ Triggered once a `CloseEvent` occurs, and the `reopen` option is set to `true`, 
 of `retries` counter is exhausted.
 
 Handler takes a single argument, the last CloseEvent's original event object.
-
-#### `timeout`
-
-Triggered once an expectation on a message has timed out.
 
 ## Installing
 

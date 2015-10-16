@@ -1,3 +1,18 @@
+# 0.3.0
+
+ - Reimplemented the expectations API to use Promises.
+
+#### Changed
+
+ - `expect()` now returns an `Expectation` object that contains a `Promise` that will be rejected on timeout or resolved if a message meets the expectation.
+ - `send()` method no longer takes 2nd and 3rd arguments.
+
+#### Removed
+
+ - Deprecated `assert()` method.
+ - Deprecated `fulfilled` event.
+ - Deprecated `timeout` event.
+
 # 0.2.2
 
 #### Fixed

@@ -23,13 +23,6 @@
 
     var ajaxSync = Backbone.sync;
 
-    function clearExpecting () {
-        if ( this.expecting ) {
-            root.clearTimeout(this.expecting);
-            this.expecting = null;
-        }
-    }
-
     function WS (url, options) {
         if ( ! url ) {
             throw new Error('URL not provided.');
@@ -60,12 +53,11 @@
         this.resources = [];
         this.defaultEvents = {};
         this.reopenTry = null;
-        this.expecting = null;
 
         // cache retries
         this.options.retries = this.retries;
 
-        ['open', 'message', 'close', 'error', 'noretries', 'timeout', 'fulfilled'].forEach(function (event) {
+        ['open', 'message', 'close', 'error', 'noretries'].forEach(function (event) {
             this.defaultEvents[this.prefix + event] = true
         }, this);
 
@@ -82,6 +74,58 @@
 
         this.open();
     }
+
+    function Expectation (ws, expect, seconds) {
+        this.instance = ws;
+        this.expectation = expect === true || expect === void 0 ? ws.expectation : expect;
+        this.interval = seconds ? seconds * 1000 : ws.expectSeconds;
+        this._topic = ws.prefix + 'message';
+
+        this.promise = new WS.Promise(function (resolve, reject) {
+            this._handler = function (data, type) {
+                if ( this.assert(data, type) ) {
+                    this.kill();
+                    resolve(data);
+                }
+            };
+
+            ws.on(this._topic, this._handler, this);
+
+            this.timeout_id = root.setTimeout(function () {
+                reject(new Error('Timeout'));
+            }, this.interval);
+
+        }.bind(this));
+    }
+
+    Expectation.prototype.kill = function () {
+        root.clearTimeout(this.timeout_id);
+        this.instance.off(this._topic, this._handler);
+    };
+
+    Expectation.prototype.assert = function (data, type) {
+        var exp = this.expectation,
+            exp_type;
+
+        if ( exp ) {
+            exp_type = typeof exp;
+
+            if ( exp_type == 'function' ) {
+                return exp.call(this, data, type);
+            }
+            else if ( exp_type == 'string' ) {
+                return type ? type == exp :
+                       typeof data == 'string' ?
+                       data == exp :
+                       data[this.instance.typeAttribute] == exp;
+            }
+
+            return Object.keys(this.expectation).every(function (key) {
+                return exp_type[key] === data[key];
+            });
+        }
+        return true;
+    };
 
     _.extend(WS.prototype, Backbone.Events, {
         open     : function () {
@@ -108,22 +152,17 @@
                 data, type;
 
             try {
-                data = JSON.parse(event.data);
+                data = root.JSON.parse(event.data);
                 type = this.typeAttribute && data[this.typeAttribute];
             }
             catch (e) {
                 data = event.data;
             }
 
-            if ( this.expecting && this.assert(data) ) {
-                clearExpecting.call(this, data);
-                this.trigger(this.prefix + 'fulfilled', data, type);
-            }
-
             if ( this.debug ) {
                 var debug_data;
                 try {
-                    debug_data = JSON.parse(event.data);
+                    debug_data = root.JSON.parse(event.data);
                 }
                 catch (e) {
                     debug_data = event.data;
@@ -147,8 +186,6 @@
         },
         onclose  : function (event) {
             this.isOpen = false;
-
-            clearExpecting.call(this);
 
             if ( this.debug ) {
                 console.info('!!! CLOSED ', event);
@@ -175,61 +212,24 @@
             if ( this.reopenTry ) {
                 root.clearTimeout(this.reopenTry);
             }
-            clearExpecting.call(this);
-
             this.socket && this.socket.close();
             this.socket = null;
             this.resources = [];
         },
-        send     : function (data, expectation, seconds) {
+        send     : function (data) {
             if ( this.socket ) {
                 if ( this.debug ) {
                     console.log('>>> SENT ', data);
                 }
 
-                if ( expectation ) {
-                    this.expect(expectation, seconds);
-                }
-
-                this.socket.send(JSON.stringify(data));
+                this.socket.send(root.JSON.stringify(data));
             }
             else {
                 throw new Error('WebSocket not opened yet!');
             }
         },
         expect   : function (expectation, seconds) {
-            clearExpecting.call(this);
-
-            if ( expectation !== true && arguments.length ) {
-                this.expectation = expectation;
-            }
-
-            this.expecting = root.setTimeout(function () {
-                this.trigger(this.prefix + 'timeout');
-            }.bind(this), seconds ? seconds * 1000 : this.expectSeconds);
-
-            return this;
-        },
-        assert   : function (data) {
-            var type;
-
-            if ( this.expectation ) {
-                type = typeof this.expectation;
-
-                if ( type == 'function' ) {
-                    return this.expectation.call(this, data);
-                }
-                else if ( type == 'string' ) {
-                    return typeof data == 'string' ?
-                           data == this.expectation :
-                           data[this.typeAttribute] == this.expectation;
-                }
-
-                return Object.keys(this.expectation).every(function (key) {
-                    return this.expectation[key] === data[key];
-                }.bind(this));
-            }
-            return true;
+            return new Expectation(this, expectation, seconds);
         },
         sync     : function (method, model, options) {
             if ( options.xhr ) {
@@ -308,6 +308,12 @@
             return this;
         }
     });
+
+    if ( root.Promise ) {
+        WS.Promise = root.Promise;
+    }
+
+    WS.Expectation = Expectation;
 
     Backbone.WS = WS;
 

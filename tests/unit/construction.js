@@ -293,6 +293,7 @@
             },
             'construct with expect function success' : function () {
                 var dfd = this.async(100, 3),
+                    exp,
                     instance = WS(SERVER_WS_URL, {
                         expectSeconds: .05,
                         typeAttribute: false,
@@ -305,14 +306,16 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:open'     : function () {
-                                        instance.send({ topic: 'world' }, true);
+                                    'ws:open'   : function () {
+                                        exp = instance.expect();
+                                        exp.promise.then(
+                                            dfd.resolve,
+                                            function () {
+                                                assert(false, 'Timeout reached');
+                                            });
+                                        instance.send({ topic: 'world' });
                                     },
-                                    'ws:timeout'  : function () {
-                                        assert(false, 'Timeout reached');
-                                    },
-                                    'ws:message'  : dfd.resolve,
-                                    'ws:fulfilled': dfd.resolve
+                                    'ws:message': dfd.resolve
                                 }
                             }
                         ]
@@ -324,6 +327,7 @@
             },
             'construct with expect function fail'    : function () {
                 var dfd = this.async(100),
+                    exp,
                     instance = WS(SERVER_WS_URL, {
                         expectSeconds: .01,
                         expect       : function (data) {
@@ -333,9 +337,10 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:timeout': dfd.resolve,
-                                    'ws:open'   : function () {
-                                        instance.send({ topic: 'world' }, true);
+                                    'ws:open': function () {
+                                        exp = instance.expect();
+                                        exp.promise.catch(dfd.resolve);
+                                        instance.send({ topic: 'world' });
                                     }
                                 }
                             }
@@ -344,6 +349,7 @@
             },
             'construct with expect string success'   : function () {
                 var dfd = this.async(100, 2),
+                    exp,
                     instance = WS(SERVER_WS_URL, {
                         typeAttribute: 'topic',
                         expect       : 'polly',
@@ -352,14 +358,16 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:open'     : function () {
+                                    'ws:open'   : function () {
+                                        exp = instance.expect();
+                                        exp.promise.then(
+                                            dfd.resolve,
+                                            function () {
+                                                assert(false, 'Timeout reached');
+                                            });
                                         instance.send({ topic: 'late' }, true);
                                     },
-                                    'ws:timeout'  : function () {
-                                        assert(false, 'Timeout reached');
-                                    },
-                                    'ws:message'  : dfd.resolve,
-                                    'ws:fulfilled': dfd.resolve
+                                    'ws:message': dfd.resolve
                                 }
                             }
                         ]
@@ -371,6 +379,7 @@
             },
             'construct with expect string fail'      : function () {
                 var dfd = this.async(100),
+                    exp,
                     instance = WS(SERVER_WS_URL, {
                         typeAttribute: 'topic',
                         expectSeconds: .05,
@@ -379,9 +388,10 @@
                             {
                                 resource: model,
                                 events  : {
-                                    'ws:timeout': dfd.resolve,
-                                    'ws:open'   : function () {
-                                        instance.send({ topic: 'world' }, true);
+                                    'ws:open': function () {
+                                        exp = instance.expect();
+                                        exp.promise.catch(dfd.resolve);
+                                        instance.send({ topic: 'world' });
                                     }
                                 }
                             }
