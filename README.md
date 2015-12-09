@@ -3,7 +3,7 @@ Backbone.WS
 
 Backbone on native WebSockets.
 
-[![NPM](https://nodei.co/npm-dl/backbone.ws.png)](https://nodei.co/npm/backbone.ws/)
+[![NPM](https://nodei.co/npm-dl/backbone.ws.png?months=3)](https://nodei.co/npm/backbone.ws/)
 
 ## What is Backbone.WS
 
