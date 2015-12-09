@@ -3,6 +3,8 @@ Backbone.WS
 
 Backbone on native WebSockets.
 
+[![NPM](https://nodei.co/npm-dl/backbone.ws.png)](https://nodei.co/npm/backbone.ws/)
+
 ## What is Backbone.WS
 
 A simple and robust facade for Backbone's Models and Collections for using WebSocket as a transport.
