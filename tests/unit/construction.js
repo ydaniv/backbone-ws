@@ -40,7 +40,12 @@
             },
             'open on construction'                   : function () {
                 var instance = WS(SERVER_WS_URL),
-                    dfd = this.async(100);
+                    dfd = this.async(100, 2);
+
+                assert.property(instance, 'ready');
+                assert.isFunction(instance.ready.then);
+
+                instance.ready.then(dfd.resolve);
 
                 instance.bind(
                     model,

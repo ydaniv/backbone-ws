@@ -1,3 +1,9 @@
+# 0.4.0
+
+#### New
+
+ - `open()`, and, of course, construction - `new WS()`, now assigns a new `Promise` object to `ready` property of the instance which is resolved after connection opened, and before triggering `onopen` handler, or rejected if connection failed, and before triggering `onerror`.
+
 # 0.3.0
 
  - Reimplemented the expectations API to use Promises.

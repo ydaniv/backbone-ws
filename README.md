@@ -33,6 +33,23 @@ Or with options:
 var ws = new Backbone.WS('ws://example.com/', { sync: true, keepOpen: true });
 ```
 
+### Better flow control
+
+You can ensure a connection is open using the `ready` promise:
+
+```
+var ws = new Backbone.WS('ws://example.com/');
+
+ws.ready
+    .then(
+        function (instance) {
+            console.log('On air!');
+        },
+        function (error) {
+            console.error('Failed to connect!', error);
+        });
+```
+
 ### Bind a resource
 
     var model = new Backbone.Model();

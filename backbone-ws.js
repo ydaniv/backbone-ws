@@ -1,6 +1,6 @@
 /*!
  * Backbone.WS
- * @version 0.3.0
+ * @version 0.4.0
  * @license BSD License (c) copyright Yehonatan Daniv
  * https://raw.github.com/ydaniv/backbone-ws/master/LICENSE
  */
@@ -132,9 +132,20 @@
             this.socket = this.options.protocol ?
                           new root.WebSocket(this.url, this.options.protocol) :
                           new root.WebSocket(this.url);
-            this.socket.onopen = this.onopen.bind(this);
+
+            this.ready = new WS.Promise(function (resolve, reject) {
+                this.socket.onopen = function () {
+                    resolve(this);
+                    this.onopen();
+                }.bind(this);
+
+                this.socket.onerror = function (error) {
+                    reject(error);
+                    this.onerror(error);
+                }.bind(this);
+            }.bind(this));
+
             this.socket.onmessage = this.onmessage.bind(this);
-            this.socket.onerror = this.onerror.bind(this);
             this.socket.onclose = this.onclose.bind(this);
         },
         onopen   : function () {
@@ -215,6 +226,7 @@
             this.socket && this.socket.close();
             this.socket = null;
             this.resources = [];
+            this.ready = null;
         },
         send     : function (data) {
             if ( this.socket ) {
@@ -225,7 +237,7 @@
                 this.socket.send(root.JSON.stringify(data));
             }
             else {
-                throw new Error('WebSocket not opened yet!');
+                throw new Error('WebSocket not open yet!');
             }
         },
         expect   : function (expectation, seconds) {
