@@ -26,7 +26,6 @@
   "devDependencies": {
     "intern": "~3.0.6",
     "backbone": "~1.2.3",
-    "jquery": "~2.1.4",
     "mock-socket": "~0.8.2",
     "requirejs": "~2.1.20"
   }
