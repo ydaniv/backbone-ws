@@ -275,4 +275,4 @@ If you'd really like to help out you can start with one of the following and sen
 
 Backbone.WS is licensed under the BSD 2-Clause License. Please see the LICENSE file for the full license.
 
-Copyright (c) 2015 Yehonatan Daniv.
+Copyright (c) 2016 Yehonatan Daniv.
